@@ -1,517 +1,601 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
+const STORAGE_KEY = 'dralm-site-config-v1';
+const AUTH_KEY = 'dralm-admin-auth-v1';
+const ADMIN_USER = 'admin';
 const ADMIN_PASSWORD = 'dranayeli2026';
-const storageKey = 'dralm-site-config';
+
+const defaultServices = [
+  {
+    title: 'Consulta inicial',
+    price: '$1,200 MXN',
+    description: 'Valoración integral con diagnóstico personalizado y recomendaciones prácticas para tu bienestar.'
+  },
+  {
+    title: 'Medicina estética',
+    price: '$2,800 MXN',
+    description: 'Tratamientos dirigidos a mejorar la salud y apariencia con enfoque personalizado.'
+  },
+  {
+    title: 'Limpieza facial y cuidado',
+    price: '$1,600 MXN',
+    description: 'Sesiones para revitalizar, equilibrar y cuidar la piel con protocolos seguros y efectivos.'
+  }
+];
+
+const defaultGallery = [
+  {
+    title: 'Consulta personalizada',
+    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=80',
+    alt: 'Consulta personalizada'
+  },
+  {
+    title: 'Tratamiento facial',
+    image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80',
+    alt: 'Tratamiento facial'
+  },
+  {
+    title: 'Bienestar integral',
+    image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=900&q=80',
+    alt: 'Bienestar integral'
+  }
+];
+
+const defaultTestimonials = [
+  {
+    quote: 'La atención fue cálida, clara y muy profesional. Me sentí acompañada en cada paso.',
+    author: 'María G.'
+  },
+  {
+    quote: 'Me ayudó a mejorar mi confianza y a sentirme más segura con un plan personalizado.',
+    author: 'Patricia R.'
+  },
+  {
+    quote: 'Todo el proceso fue muy amable y los resultados han sido muy positivos.',
+    author: 'Daniela S.'
+  }
+];
+
+const defaultFaq = [
+  {
+    question: '¿Cuánto tiempo dura una consulta?',
+    answer: 'La sesión inicial suele durar entre 30 y 45 minutos, dependiendo del caso y las necesidades.'
+  },
+  {
+    question: '¿Necesito agendar una cita previa?',
+    answer: 'Sí, es recomendable agendar con anticipación para garantizar disponibilidad y atención personalizada.'
+  },
+  {
+    question: '¿Ofrecen atención personalizada?',
+    answer: 'Sí. Cada plan está diseñado tomando en cuenta tus objetivos, historial y preferencias.'
+  }
+];
 
 const defaultConfig = {
   brandName: 'Dra. Nayeli Mellado',
-  heroTitle: 'Cuidado profesional<br />para una <span class="accent">versión más segura</span> de ti.',
-  heroSubtitle: 'En mi práctica integramos atención médica, estética y acompañamiento personalizado para ayudarte a mejorar tu bienestar, imagen y confianza con resultados naturales.',
-  aboutTitle: 'Tu bienestar empieza con una atención humana, clara y segura.',
-  aboutText1: 'Soy la Dra. Nayeli Mellado, especialista en medicina estética y bienestar integral. Mi objetivo es acompañarte con un enfoque individual, cuidando cada detalle para ayudarte a sentirte mejor contigo misma y con más confianza.',
-  aboutText2: 'Cada plan se diseña según tus objetivos, necesidades y estilo de vida para lograr resultados naturales, elegantes y sostenibles a largo plazo.',
-  contactText: 'Estamos listos para acompañarte en tu proceso. Escríbenos para agendar tu consulta inicial, resolver dudas o recibir orientación personalizada.',
-  phone: '+52 (444) 222 3344',
+  heroTitle: 'Cuidado profesional para una vida más saludable',
+  heroSubtitle: 'Atención personalizada para mejorar tu bienestar, confianza y calidad de vida con un enfoque humano y claro.',
+  aboutTitle: 'Tu bienestar empieza con una atención atenta y humana',
+  aboutText1: 'La Dra. Nayeli Mellado combina experiencia, empatía y criterio clínico para ofrecer una atención integral y segura. Cada consulta está enfocada en resolver necesidades reales y acompañar a cada paciente con claridad.',
+  aboutText2: 'Nuestra prioridad es crear un espacio de confianza donde puedas entender tu proceso, recibir orientación profesional y sentirte respaldada en cada etapa.',
+  contactPhone: '+52 (444) 222 3344',
   email: 'hello@dranayelimellado.com',
   address: 'Calle Principal 123, San Luis Potosí',
   whatsapp: '+52 444 222 3344',
-  colors: { primary: '#d48d8d', secondary: '#f8eee7', accent: '#7a7d5d', ink: '#2d2a2a' },
   logo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
-  heroImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-  aboutImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1200&q=80',
-  services: [
-    { title: 'Consulta inicial', price: '$1,200', description: 'Valoración personalizada para definir el mejor tratamiento según tus objetivos.', icon: '✦' },
-    { title: 'Lifting facial', price: '$2,800', description: 'Tratamiento no invasivo para mejorar tono, firmeza y luminosidad.', icon: '✧' },
-    { title: 'Hidratación y rejuvenecimiento', price: '$1,800', description: 'Sesiones de bienestar y luminosidad para una piel más fresca y cuidada.', icon: '❋' }
-  ],
-  pricing: [
-    { name: 'Consulta de valoración', price: '$1,200', details: ['Revisión inicial', 'Diagnóstico personalizado', 'Plan recomendado'] },
-    { name: 'Tratamiento facial', price: '$2,800', details: ['Sesión profesional', 'Resultados naturales', 'Cuidado posterior'] },
-    { name: 'Paquete bienestar', price: '$4,500', details: ['3 sesiones', 'Seguimiento continuo', 'Precio preferente'] }
-  ],
-  gallery: [
-    { name: 'Consulta joven', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Resultado natural', image: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Estética facial', image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Cuidados integrales', image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80' }
-  ],
-  testimonials: [
-    { quote: 'La atención fue muy cercana y profesional. Me sentí acompañada en cada paso.', author: 'María L.', role: 'Paciente' },
-    { quote: 'Los resultados fueron naturales y muy elegantes. Definitivamente lo recomiendo.', author: 'Alejandra G.', role: 'Cliente' },
-    { quote: 'Me encantó la atención personalizada y que todo quedó explicado con claridad.', author: 'Fernanda S.', role: 'Pacienta' }
-  ],
-  metrics: { years: '12+', patients: '4.8K', rating: '4.9/5' },
-  floatingTitle: 'Consulta personalizada',
-  floatingText: 'Diagnóstico con enfoque humano y natural'
+  heroImage: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=80',
+  colors: {
+    primary: '#d48d8d',
+    secondary: '#f8eee7',
+    accent: '#7a7d5d',
+    ink: '#2e2a2a',
+    link: '#2d2a6a'
+  },
+  services: defaultServices,
+  gallery: defaultGallery,
+  testimonials: defaultTestimonials,
+  faq: defaultFaq
 };
 
-const toAdminForm = (data) => ({
-  brandName: data.brandName,
-  heroTitle: data.heroTitle,
-  heroSubtitle: data.heroSubtitle,
-  contactText: data.contactText,
-  phone: data.phone,
-  email: data.email,
-  address: data.address,
-  whatsapp: data.whatsapp,
-  primary: data.colors.primary,
-  secondary: data.colors.secondary,
-  accent: data.colors.accent,
-  ink: data.colors.ink,
-  servicesText: (data.services || []).map((service) => `${service.title} | ${service.description} | ${service.price}`).join('\n'),
-  pricingText: (data.pricing || []).map((plan) => `${plan.name} | ${plan.price} | ${(plan.details || []).join('; ')}`).join('\n')
+const sanitizeConfig = (value) => ({
+  ...defaultConfig,
+  ...(value || {}),
+  colors: {
+    ...defaultConfig.colors,
+    ...(value?.colors || {})
+  },
+  services: Array.isArray(value?.services) && value.services.length ? value.services : defaultServices,
+  gallery: Array.isArray(value?.gallery) && value.gallery.length ? value.gallery : defaultGallery,
+  testimonials: Array.isArray(value?.testimonials) && value.testimonials.length ? value.testimonials : defaultTestimonials,
+  faq: Array.isArray(value?.faq) && value.faq.length ? value.faq : defaultFaq
 });
-
-const parseServices = (txt) => {
-  if (!txt || !txt.trim()) return defaultConfig.services;
-  return txt.split('\n').map((line) => {
-    const [title, description, price] = line.split('|').map((v) => v.trim());
-    return {
-      title: title || 'Servicio',
-      description: description || 'Descripción del servicio.',
-      price: price || '$0',
-      icon: '✦'
-    };
-  });
-};
-
-const parsePricing = (txt) => {
-  if (!txt || !txt.trim()) return defaultConfig.pricing;
-  return txt.split('\n').map((line) => {
-    const [name, price, detailsText] = line.split('|').map((v) => v.trim());
-    return {
-      name: name || 'Paquete',
-      price: price || '$0',
-      details: detailsText ? detailsText.split(';').map((d) => d.trim()).filter(Boolean) : ['Detalle del paquete']
-    };
-  });
-};
 
 function App() {
   const [config, setConfig] = useState(() => {
+    if (typeof window === 'undefined') {
+      return defaultConfig;
+    }
+
     try {
-      const stored = localStorage.getItem(storageKey);
-      if (!stored) return defaultConfig;
-      const parsed = JSON.parse(stored);
-      return { ...defaultConfig, ...parsed, colors: { ...defaultConfig.colors, ...(parsed.colors || {}) } };
-    } catch {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return sanitizeConfig(raw ? JSON.parse(raw) : defaultConfig);
+    } catch (error) {
       return defaultConfig;
     }
   });
 
-  const [loginPassword, setLoginPassword] = useState('');
-  const [showLogin, setShowLogin] = useState(true);
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [adminForm, setAdminForm] = useState(() => toAdminForm(defaultConfig));
-  const fileInputRef = useRef(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    try {
+      return window.localStorage.getItem(AUTH_KEY) === 'true';
+    } catch (error) {
+      return false;
+    }
+  });
+
+  const [authForm, setAuthForm] = useState({ username: ADMIN_USER, password: '' });
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(config));
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    }
   }, [config]);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty('--primary', config.colors.primary);
-    root.style.setProperty('--secondary', config.colors.secondary);
-    root.style.setProperty('--accent', config.colors.accent);
-    root.style.setProperty('--ink', config.colors.ink);
-  }, [config.colors]);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(AUTH_KEY, String(isLoggedIn));
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
-    if (showAdmin) {
-      setAdminForm(toAdminForm(config));
+    if (!toast) {
+      return undefined;
     }
-  }, [showAdmin, config]);
 
-  const publicSite = useMemo(() => ({
-    ...config,
-    services: config.services || [],
-    pricing: config.pricing || [],
-    gallery: config.gallery || [],
-    testimonials: config.testimonials || []
-  }), [config]);
+    const timeout = window.setTimeout(() => setToast(''), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
 
-  const handleLogin = () => {
-    if (loginPassword === ADMIN_PASSWORD) {
-      setShowLogin(false);
-      setShowAdmin(true);
-      setLoginPassword('');
-      setAdminForm(toAdminForm(config));
-      return;
-    }
-    window.alert('Contraseña incorrecta');
+  const themeStyle = useMemo(
+    () => ({
+      '--primary-color': config.colors.primary,
+      '--secondary-color': config.colors.secondary,
+      '--accent-color': config.colors.accent,
+      '--ink-color': config.colors.ink,
+      '--link-color': config.colors.link
+    }),
+    [config.colors]
+  );
+
+  const whatsappLink = `https://wa.me/${config.whatsapp.replace(/\D/g, '')}`;
+
+  const updateField = (field, value) => {
+    setConfig((prev) => ({ ...prev, [field]: value }));
   };
 
-  const openAdmin = () => {
-    setShowLogin(true);
-    setShowAdmin(false);
-  };
-
-  const closeAdmin = () => {
-    setShowAdmin(false);
-    setShowLogin(false);
-  };
-
-  const updateAdminField = (field, value) => {
-    setAdminForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = () => {
+  const updateColor = (field, value) => {
     setConfig((prev) => ({
       ...prev,
-      brandName: adminForm.brandName || defaultConfig.brandName,
-      heroTitle: adminForm.heroTitle || defaultConfig.heroTitle,
-      heroSubtitle: adminForm.heroSubtitle || defaultConfig.heroSubtitle,
-      contactText: adminForm.contactText || defaultConfig.contactText,
-      phone: adminForm.phone || defaultConfig.phone,
-      email: adminForm.email || defaultConfig.email,
-      address: adminForm.address || defaultConfig.address,
-      whatsapp: adminForm.whatsapp || defaultConfig.whatsapp,
       colors: {
-        primary: adminForm.primary || defaultConfig.colors.primary,
-        secondary: adminForm.secondary || defaultConfig.colors.secondary,
-        accent: adminForm.accent || defaultConfig.colors.accent,
-        ink: adminForm.ink || defaultConfig.colors.ink,
-      },
-      services: parseServices(adminForm.servicesText),
-      pricing: parsePricing(adminForm.pricingText)
+        ...prev.colors,
+        [field]: value
+      }
     }));
-    setShowAdmin(false);
   };
 
-  const handleReset = () => {
-    setConfig(defaultConfig);
-    setAdminForm(toAdminForm(defaultConfig));
-    setShowAdmin(false);
+  const updateListItem = (key, index, field, value) => {
+    setConfig((prev) => ({
+      ...prev,
+      [key]: prev[key].map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    }));
   };
 
-  const handleFileUpload = (field) => (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      setConfig((prev) => ({ ...prev, [field]: result }));
-    };
-    reader.readAsDataURL(file);
+  const addListItem = (key, template) => {
+    setConfig((prev) => ({
+      ...prev,
+      [key]: [...prev[key], template]
+    }));
   };
 
-  const exportConfig = () => {
+  const removeListItem = (key, index) => {
+    setConfig((prev) => ({
+      ...prev,
+      [key]: prev[key].filter((_, itemIndex) => itemIndex !== index)
+    }));
+  };
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+
+    if (authForm.username === ADMIN_USER && authForm.password === ADMIN_PASSWORD) {
+      setIsLoggedIn(true);
+      setAuthForm({ username: ADMIN_USER, password: '' });
+      setToast('Acceso concedido');
+      return;
+    }
+
+    setToast('Credenciales incorrectas');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setToast('Sesión cerrada');
+  };
+
+  const handleExport = () => {
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'dralm-config.json';
+    link.download = 'dranayeli-config.json';
     link.click();
     URL.revokeObjectURL(url);
+    setToast('Configuración exportada');
   };
 
-  const importConfig = (event) => {
+  const handleImport = (event) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result));
-        setConfig({ ...defaultConfig, ...parsed, colors: { ...defaultConfig.colors, ...(parsed.colors || {}) } });
-        setShowAdmin(false);
-        window.alert('Configuración importada correctamente');
-      } catch {
-        window.alert('El archivo JSON no es válido');
+        const data = JSON.parse(String(reader.result));
+        setConfig(sanitizeConfig(data));
+        setToast('Configuración importada');
+      } catch (error) {
+        setToast('Archivo inválido');
       }
     };
     reader.readAsText(file);
+    event.target.value = '';
   };
 
-  return (
-    <>
-      <header className="topbar">
-        <div className="container topbar-inner">
-          <div className="brand">
-            <div className="brand-mark">
-              <img id="brandLogo" src={publicSite.logo} alt="Logo de la Dra. Nayeli Mellado" />
-            </div>
-            <div className="brand-name" id="brandName">{publicSite.brandName}</div>
-          </div>
-          <nav className="nav" aria-label="Navegación principal">
-            <a href="#inicio">Inicio</a>
-            <a href="#sobre-mi">Sobre mí</a>
-            <a href="#servicios">Servicios</a>
-            <a href="#precios">Precios</a>
-            <a href="#galeria">Galería</a>
-            <a href="#contacto">Contacto</a>
-          </nav>
-          <button className="btn btn-primary" type="button" onClick={openAdmin}>Panel admin</button>
+  const handleReset = () => {
+    setConfig(defaultConfig);
+    setToast('Se restauró la configuración inicial');
+  };
+
+  const adminPanel = (
+    <section className="admin-panel">
+      <div className="admin-header">
+        <div>
+          <p className="eyebrow">Panel admin</p>
+          <h2>Personaliza tu sitio</h2>
         </div>
+
+        <div className="admin-actions">
+          <label className="action-upload">
+            Importar
+            <input type="file" accept="application/json" onChange={handleImport} />
+          </label>
+          <button className="secondary-btn" type="button" onClick={handleExport}>Exportar</button>
+          <button className="secondary-btn" type="button" onClick={handleReset}>Restaurar</button>
+          <button className="primary-btn" type="button" onClick={handleLogout}>Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div className="admin-grid">
+        <label className="field">
+          <span>Nombre de la marca</span>
+          <input value={config.brandName} onChange={(event) => updateField('brandName', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Logo URL</span>
+          <input value={config.logo} onChange={(event) => updateField('logo', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Título principal</span>
+          <input value={config.heroTitle} onChange={(event) => updateField('heroTitle', event.target.value)} />
+        </label>
+
+        <label className="field field-wide">
+          <span>Subtítulo</span>
+          <textarea value={config.heroSubtitle} onChange={(event) => updateField('heroSubtitle', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Teléfono</span>
+          <input value={config.contactPhone} onChange={(event) => updateField('contactPhone', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Correo</span>
+          <input value={config.email} onChange={(event) => updateField('email', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Dirección</span>
+          <input value={config.address} onChange={(event) => updateField('address', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>WhatsApp</span>
+          <input value={config.whatsapp} onChange={(event) => updateField('whatsapp', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Imagen principal</span>
+          <input value={config.heroImage} onChange={(event) => updateField('heroImage', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Color primario</span>
+          <input type="color" value={config.colors.primary} onChange={(event) => updateColor('primary', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Color secundario</span>
+          <input type="color" value={config.colors.secondary} onChange={(event) => updateColor('secondary', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Color de acento</span>
+          <input type="color" value={config.colors.accent} onChange={(event) => updateColor('accent', event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Color de texto</span>
+          <input type="color" value={config.colors.ink} onChange={(event) => updateColor('ink', event.target.value)} />
+        </label>
+      </div>
+
+      <div className="admin-block">
+        <div className="block-header">
+          <h3>Servicios</h3>
+          <button className="secondary-btn" type="button" onClick={() => addListItem('services', { title: 'Nuevo servicio', price: '$0 MXN', description: 'Descripción del servicio' })}>Agregar</button>
+        </div>
+
+        {config.services.map((service, index) => (
+          <div className="admin-list-item" key={`service-${index}`}>
+            <input value={service.title} onChange={(event) => updateListItem('services', index, 'title', event.target.value)} />
+            <input value={service.price} onChange={(event) => updateListItem('services', index, 'price', event.target.value)} />
+            <button className="danger-btn" type="button" onClick={() => removeListItem('services', index)}>Eliminar</button>
+            <textarea value={service.description} onChange={(event) => updateListItem('services', index, 'description', event.target.value)} />
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-block">
+        <div className="block-header">
+          <h3>Galería</h3>
+          <button className="secondary-btn" type="button" onClick={() => addListItem('gallery', { title: 'Nueva imagen', image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80', alt: 'Nueva imagen' })}>Agregar</button>
+        </div>
+
+        {config.gallery.map((item, index) => (
+          <div className="admin-list-item gallery-item" key={`gallery-${index}`}>
+            <input value={item.title} onChange={(event) => updateListItem('gallery', index, 'title', event.target.value)} />
+            <input value={item.image} onChange={(event) => updateListItem('gallery', index, 'image', event.target.value)} />
+            <button className="danger-btn" type="button" onClick={() => removeListItem('gallery', index)}>Eliminar</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-block">
+        <div className="block-header">
+          <h3>Testimonios</h3>
+          <button className="secondary-btn" type="button" onClick={() => addListItem('testimonials', { author: 'Nuevo paciente', quote: 'Tu experiencia aquí' })}>Agregar</button>
+        </div>
+
+        {config.testimonials.map((item, index) => (
+          <div className="admin-list-item" key={`testimonial-${index}`}>
+            <input value={item.author} onChange={(event) => updateListItem('testimonials', index, 'author', event.target.value)} />
+            <textarea value={item.quote} onChange={(event) => updateListItem('testimonials', index, 'quote', event.target.value)} />
+            <button className="danger-btn" type="button" onClick={() => removeListItem('testimonials', index)}>Eliminar</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-block">
+        <div className="block-header">
+          <h3>FAQ</h3>
+          <button className="secondary-btn" type="button" onClick={() => addListItem('faq', { question: 'Nueva pregunta', answer: 'Respuesta breve.' })}>Agregar</button>
+        </div>
+
+        {config.faq.map((item, index) => (
+          <div className="admin-list-item" key={`faq-${index}`}>
+            <input value={item.question} onChange={(event) => updateListItem('faq', index, 'question', event.target.value)} />
+            <textarea value={item.answer} onChange={(event) => updateListItem('faq', index, 'answer', event.target.value)} />
+            <button className="danger-btn" type="button" onClick={() => removeListItem('faq', index)}>Eliminar</button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  return (
+    <div className="page-shell" style={themeStyle}>
+      <header className="topbar">
+        <nav className="nav container">
+          <div className="brand">
+            <img src={config.logo} alt={config.brandName} className="brand-logo" />
+            <div>
+              <strong>{config.brandName}</strong>
+            </div>
+          </div>
+
+          <div className="nav-links">
+            <a href="#about">Sobre mí</a>
+            <a href="#services">Servicios</a>
+            <a href="#gallery">Galería</a>
+            <a href="#testimonials">Testimonios</a>
+            <a href="#faq">FAQ</a>
+            <a href="#contact">Contacto</a>
+          </div>
+        </nav>
       </header>
 
-      <main id="inicio">
-        <section className="hero">
-          <div className="container hero-inner">
+      <main>
+        <section className="hero container">
+          <div className="hero-copy">
+            <p className="eyebrow">Atención integral y personalizada</p>
+            <h1>{config.heroTitle}</h1>
+            <p className="lead">{config.heroSubtitle}</p>
+
+            <div className="cta-row">
+              <a href={whatsappLink} className="primary-btn" target="_blank" rel="noreferrer">Agendar cita</a>
+              <a href="#services" className="secondary-btn">Ver servicios</a>
+            </div>
+
+            <ul className="highlights">
+              <li>Consulta personalizada</li>
+              <li>Tratamientos seguros</li>
+              <li>Enfoque humano y profesional</li>
+            </ul>
+          </div>
+
+          <div className="hero-visual">
+            <img src={config.heroImage} alt={config.brandName} />
+          </div>
+        </section>
+
+        <section id="about" className="about container">
+          <div className="section-heading">
+            <p className="eyebrow">Sobre mí</p>
+            <h2>{config.aboutTitle}</h2>
+          </div>
+
+          <div className="about-grid">
+            <div className="about-card">
+              <p>{config.aboutText1}</p>
+            </div>
+            <div className="about-card">
+              <p>{config.aboutText2}</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="services" className="services container">
+          <div className="section-heading">
+            <p className="eyebrow">Servicios</p>
+            <h2>Soluciones adaptadas a ti</h2>
+          </div>
+
+          <div className="service-grid">
+            {config.services.map((service, index) => (
+              <article className="service-card" key={`service-${index}`}>
+                <span className="service-price">{service.price}</span>
+                <h3>{service.title}</h3>
+                <p>{service.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="gallery" className="gallery container">
+          <div className="section-heading">
+            <p className="eyebrow">Galería</p>
+            <h2>Resultados y ambiente</h2>
+          </div>
+
+          <div className="gallery-grid">
+            {config.gallery.map((item, index) => (
+              <figure className="gallery-item" key={`gallery-${index}`}>
+                <img src={item.image} alt={item.alt || item.title} />
+                <figcaption>{item.title}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section id="testimonials" className="testimonials container">
+          <div className="section-heading">
+            <p className="eyebrow">Testimonios</p>
+            <h2>Pacientes satisfechos</h2>
+          </div>
+
+          <div className="testimonial-grid">
+            {config.testimonials.map((item, index) => (
+              <blockquote className="testimonial-card" key={`testimonial-${index}`}>
+                <p>“{item.quote}”</p>
+                <footer>{item.author}</footer>
+              </blockquote>
+            ))}
+          </div>
+        </section>
+
+        <section id="faq" className="faq container">
+          <div className="section-heading">
+            <p className="eyebrow">FAQ</p>
+            <h2>Preguntas frecuentes</h2>
+          </div>
+
+          <div className="faq-list">
+            {config.faq.map((item, index) => (
+              <div className="faq-item" key={`faq-${index}`}>
+                <h3>{item.question}</h3>
+                <p>{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="contact" className="contact container">
+          <div className="contact-card">
             <div>
-              <div className="eyebrow">Atención estética y personal</div>
-              <h1 dangerouslySetInnerHTML={{ __html: publicSite.heroTitle }} />
-              <p className="lead">{publicSite.heroSubtitle}</p>
-              <div className="hero-actions">
-                <a className="btn btn-primary" href="#contacto">Agendar cita</a>
-                <a className="btn btn-secondary" href="#servicios">Ver servicios</a>
-              </div>
-              <div className="hero-metrics">
-                <div className="metric"><strong>{publicSite.metrics?.years || '12+'}</strong><span>Años de experiencia</span></div>
-                <div className="metric"><strong>{publicSite.metrics?.patients || '4.8K'}</strong><span>Pacientes atendidos</span></div>
-                <div className="metric"><strong>{publicSite.metrics?.rating || '4.9/5'}</strong><span>Calificación</span></div>
-              </div>
+              <p className="eyebrow">Contacto</p>
+              <h2>Agenda tu consulta</h2>
+              <p>Estamos para ayudarte a cuidar tu bienestar con un plan claro y personalizado.</p>
             </div>
-            <div className="visual-wrap">
-              <div className="visual-card">
-                <img src={publicSite.heroImage} alt="Dra. Nayeli Mellado" />
-              </div>
-              <div className="floating-card">
-                <strong>{publicSite.floatingTitle}</strong>
-                <span>{publicSite.floatingText}</span>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="about" id="sobre-mi">
-          <div className="container about-inner">
-            <div className="about-photo">
-              <img src={publicSite.aboutImage} alt="Retrato de la Dra. Nayeli Mellado" />
+            <div className="contact-list">
+              <p><strong>Teléfono:</strong> {config.contactPhone}</p>
+              <p><strong>Correo:</strong> {config.email}</p>
+              <p><strong>Dirección:</strong> {config.address}</p>
             </div>
-            <div>
-              <div className="section-tag">Sobre mí</div>
-              <h2>{publicSite.aboutTitle}</h2>
-              <p>{publicSite.aboutText1}</p>
-              <p>{publicSite.aboutText2}</p>
-              <ul className="check-list">
-                <li>Diagnóstico personalizado</li>
-                <li>Tratamientos seguros</li>
-                <li>Atención cercana y profesional</li>
-              </ul>
-            </div>
-          </div>
-        </section>
 
-        <section id="servicios">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="section-tag">Servicios</div>
-                <h2>Soluciones pensadas para ti.</h2>
-              </div>
-            </div>
-            <div className="services-grid">
-              {publicSite.services.map((service, idx) => (
-                <article key={`${service.title}-${idx}`} className="card service-card">
-                  <div className="service-icon">{service.icon || '✦'}</div>
-                  <h3>{service.title}</h3>
-                  <p>{service.description}</p>
-                  <div className="service-meta">
-                    <strong>{service.price}</strong>
-                    <span>Más info</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="precios">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="section-tag">Precios</div>
-                <h2>Opciones accesibles y transparentes.</h2>
-              </div>
-            </div>
-            <div className="pricing-grid">
-              {publicSite.pricing.map((plan, index) => (
-                <article key={`${plan.name}-${index}`} className={`card pricing-card ${index === 1 ? 'featured' : ''}`}>
-                  {index === 1 && <span className="badge">Popular</span>}
-                  <h3>{plan.name}</h3>
-                  <div className="price"><strong>{plan.price}</strong><span>MXN</span></div>
-                  <ul className="pricing-list">
-                    {(plan.details || []).map((detail, i) => (
-                      <li key={`${detail}-${i}`}>{detail}</li>
-                    ))}
-                  </ul>
-                  <a href="#contacto" className="btn btn-primary">Solicitar</a>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="galeria">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="section-tag">Galería</div>
-                <h2>Resultados que inspiran confianza.</h2>
-              </div>
-            </div>
-            <div className="gallery-grid">
-              {publicSite.gallery.map((photo, idx) => (
-                <figure key={`${photo.name}-${idx}`} className="gallery-card">
-                  <img src={photo.image} alt={photo.name} />
-                  <figcaption>{photo.name}</figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="section-tag">Testimonios</div>
-                <h2>Lo que dicen mis pacientes.</h2>
-              </div>
-            </div>
-            <div className="testimonial-grid">
-              {publicSite.testimonials.map((item, idx) => (
-                <article key={`${item.author}-${idx}`} className="card quote-card">
-                  <div>★★★★★</div>
-                  <p>“{item.quote}”</p>
-                  <div className="quote-user">
-                    <div className="quote-avatar" />
-                    <div>
-                      <strong>{item.author}</strong>
-                      <span>{item.role}</span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="contact-shell" id="contacto">
-          <div className="container">
-            <div className="contact-card">
-              <div>
-                <div className="section-tag">Contacto</div>
-                <h2>Agenda tu cita</h2>
-                <p>{publicSite.contactText}</p>
-              </div>
-              <div className="info-stack">
-                <div className="info-item">
-                  <div className="i">☎</div>
-                  <div>
-                    <strong>Teléfono</strong>
-                    <a href={`tel:${publicSite.phone.replace(/[^\d+]/g, '')}`}>{publicSite.phone}</a>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <div className="i">✉</div>
-                  <div>
-                    <strong>Correo</strong>
-                    <a href={`mailto:${publicSite.email}`}>{publicSite.email}</a>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <div className="i">⌂</div>
-                  <div>
-                    <strong>Ubicación</strong>
-                    <span>{publicSite.address}</span>
-                  </div>
-                </div>
-              </div>
+            <div className="cta-row">
+              <a href={whatsappLink} className="primary-btn" target="_blank" rel="noreferrer">Escríbeme por WhatsApp</a>
+              <a href={`mailto:${config.email}`} className="secondary-btn">Enviar correo</a>
             </div>
           </div>
         </section>
       </main>
 
-      <footer>
-        <div className="container footer-inner">
-          <div className="brand">
-            <div className="brand-mark"><img src={publicSite.logo} alt="Logo" /></div>
-            <div className="brand-name">{publicSite.brandName}</div>
-          </div>
-          <div>© <span>{new Date().getFullYear()}</span> {publicSite.brandName}. Todos los derechos reservados.</div>
-        </div>
+      <footer className="footer container">
+        <p>© {new Date().getFullYear()} {config.brandName}. Todos los derechos reservados.</p>
       </footer>
 
-      {showLogin && (
-        <div className="modal" role="dialog" aria-modal="true">
-          <div className="login-box">
-            <h3>Acceso al panel</h3>
-            <label htmlFor="adminPassword">Contraseña</label>
-            <input id="adminPassword" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Escribe la contraseña" />
-            <button className="btn btn-primary" type="button" onClick={handleLogin}>Entrar</button>
-            <div className="hint">Contraseña de ejemplo: dranayeli2026</div>
-          </div>
+      {!isLoggedIn && (
+        <div className="login-overlay">
+          <form className="login-card" onSubmit={handleLogin}>
+            <p className="eyebrow">Acceso administrador</p>
+            <h2>Iniciar sesión</h2>
+
+            <label className="field">
+              <span>Usuario</span>
+              <input
+                value={authForm.username}
+                onChange={(event) => setAuthForm({ ...authForm, username: event.target.value })}
+              />
+            </label>
+
+            <label className="field">
+              <span>Contraseña</span>
+              <input
+                type="password"
+                value={authForm.password}
+                onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })}
+              />
+            </label>
+
+            <button className="primary-btn" type="submit">Entrar</button>
+          </form>
         </div>
       )}
 
-      {showAdmin && (
-        <div className="modal" role="dialog" aria-modal="true">
-          <div className="dialog">
-            <div className="modal-header">
-              <h3>Panel de administración</h3>
-              <button className="close-btn" type="button" onClick={closeAdmin}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="panel-grid">
-                <div className="panel-block">
-                  <h4>Datos generales</h4>
-                  <div className="field"><label>Nombre del profesional</label><input type="text" value={adminForm.brandName} onChange={(e) => updateAdminField('brandName', e.target.value)} /></div>
-                  <div className="field"><label>Título de inicio</label><input type="text" value={adminForm.heroTitle} onChange={(e) => updateAdminField('heroTitle', e.target.value)} /></div>
-                  <div className="field"><label>Texto de introducción</label><textarea value={adminForm.heroSubtitle} onChange={(e) => updateAdminField('heroSubtitle', e.target.value)} /></div>
-                  <div className="field"><label>Texto de contacto</label><textarea value={adminForm.contactText} onChange={(e) => updateAdminField('contactText', e.target.value)} /></div>
-                </div>
-
-                <div className="panel-block">
-                  <h4>Contacto y branding</h4>
-                  <div className="field"><label>Teléfono</label><input type="text" value={adminForm.phone} onChange={(e) => updateAdminField('phone', e.target.value)} /></div>
-                  <div className="field"><label>Correo</label><input type="email" value={adminForm.email} onChange={(e) => updateAdminField('email', e.target.value)} /></div>
-                  <div className="field"><label>Dirección</label><input type="text" value={adminForm.address} onChange={(e) => updateAdminField('address', e.target.value)} /></div>
-                  <div className="field"><label>WhatsApp</label><input type="text" value={adminForm.whatsapp} onChange={(e) => updateAdminField('whatsapp', e.target.value)} /></div>
-                </div>
-
-                <div className="panel-block" style={{ gridColumn: '1 / -1' }}>
-                  <h4>Colores</h4>
-                  <div className="inline-colors">
-                    <div className="color-picker"><input type="color" value={adminForm.primary} onChange={(e) => updateAdminField('primary', e.target.value)} /><label>Primario</label></div>
-                    <div className="color-picker"><input type="color" value={adminForm.secondary} onChange={(e) => updateAdminField('secondary', e.target.value)} /><label>Secundario</label></div>
-                    <div className="color-picker"><input type="color" value={adminForm.accent} onChange={(e) => updateAdminField('accent', e.target.value)} /><label>Acento</label></div>
-                    <div className="color-picker"><input type="color" value={adminForm.ink} onChange={(e) => updateAdminField('ink', e.target.value)} /><label>Texto</label></div>
-                  </div>
-                </div>
-
-                <div className="panel-block">
-                  <h4>Logo e imágenes</h4>
-                  <div className="field"><label>Logo</label><input type="file" accept="image/*" onChange={handleFileUpload('logo')} /></div>
-                  <div className="field"><label>Imagen principal</label><input type="file" accept="image/*" onChange={handleFileUpload('heroImage')} /></div>
-                  <div className="field"><label>Imagen sobre mí</label><input type="file" accept="image/*" onChange={handleFileUpload('aboutImage')} /></div>
-                </div>
-
-                <div className="panel-block">
-                  <h4>Servicios</h4>
-                  <div className="field"><textarea value={adminForm.servicesText} onChange={(e) => updateAdminField('servicesText', e.target.value)} placeholder="Ejemplo: Consulta de valoración | Evaluación inicial | $1,200" /></div>
-                </div>
-
-                <div className="panel-block" style={{ gridColumn: '1 / -1' }}>
-                  <h4>Precios</h4>
-                  <div className="field"><textarea value={adminForm.pricingText} onChange={(e) => updateAdminField('pricingText', e.target.value)} placeholder="Ejemplo: Consulta inicial | $1,200 | Diagnóstico integral; valoración; plan personalizado" /></div>
-                </div>
-              </div>
-
-              <div className="admin-actions">
-                <button className="btn btn-secondary" type="button" onClick={exportConfig}>Exportar JSON</button>
-                <button className="btn btn-secondary" type="button" onClick={() => fileInputRef.current?.click()}>Importar JSON</button>
-                <button className="btn btn-secondary" type="button" onClick={handleReset}>Restablecer</button>
-                <button className="btn btn-primary" type="button" onClick={handleSave}>Guardar cambios</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <input ref={fileInputRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={importConfig} />
-    </>
+      {toast && <div className="toast">{toast}</div>}
+    </div>
   );
 }
 
